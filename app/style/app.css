@@ -1,0 +1,84 @@
+html, body, #content {
+	position: absolute;
+	margin: 0;
+	padding: 0;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+#media, #mediaListContainer, #mediaControls {
+	position: absolute;
+	display: block;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+#media {
+	width: calc(100% - 300px);
+	height: calc(100% - 40px);
+	top: 40px;
+	padding-bottom: 10px;
+}
+
+#mediaControls {
+	width: calc(100% - 300px);
+	height: 40px;
+	padding: 5px;
+	top: 0;
+}
+
+#mediaControlRateUp, #mediaControlRateDown {
+	width: 20px;
+	height: 20px;
+	padding: 10px;
+    float: left;
+    display: block;
+	cursor: pointer;
+}
+
+#mediaControlRateUp {
+	margin-top: -5px;
+}
+
+#mediaControlRateDown {
+	padding-top: 12px;
+}
+
+#mediaControlTitle {
+	left: 70px;
+	right: 70px;
+	height: 40px;
+	line-height: 40px;
+}
+
+#mediaListContainer {
+	list-style-position: outside;
+	list-style-type: decimal-leading-zero;
+	width: 300px;
+	height: 100%;
+	top: 0px;
+	right: 0px;
+	padding-bottom: 10px;
+	font-size: 11pt;
+	overflow-y: auto;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.button {
+	width: 10px;
+	height: 10px;
+}
+
+.mediaItem {
+	padding: 5px;
+
+}
+
+.activeMediaItem {
+	background-color: rgba(220, 220, 255, 0.75);
+}
