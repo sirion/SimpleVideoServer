@@ -39,7 +39,7 @@ VideoServer.prototype.infoDefaults = function(info) {
 };
 
 VideoServer.prototype._readInfoIndex = function() {
-	var indexFile = this._path.join(this._dir, "index.json");
+	var indexFile = this._path.join(this._dir, ".mediaIndex.json");
 	try {
 		this._infoIndex = JSON.parse(this._fs.readFileSync(indexFile, { encoding: "utf8" }));
 	} catch (error) {
@@ -76,7 +76,7 @@ VideoServer.prototype._updateInfoIndex = function() {
 					}
 				}
 				if (indexChanged) {
-					var indexFile = this._path.join(this._dir, "index.json");
+					var indexFile = this._path.join(this._dir, ".mediaIndex.json");
 					this._fs.writeFile(indexFile, JSON.stringify(this._infoIndex), { encoding: "utf8" }, function(writeError) {
 						if (error) {
 							reject(writeError);
@@ -209,7 +209,7 @@ VideoServer.prototype.rate = function(filename, requestData) {
 				console.log("Setting to... " + this._infoIndex[filename].rating + " / " + this._infoIndex[filename].numRatings);
 			}
 
-			var indexFile = this._path.join(this._dir, "index.json");
+			var indexFile = this._path.join(this._dir, ".mediaIndex.json");
 			this._fs.writeFile(indexFile, JSON.stringify(this._infoIndex, null, 4), { encoding: "utf8" }, function(error) {
 				console.log("Writing index file...");
 				if (error) {

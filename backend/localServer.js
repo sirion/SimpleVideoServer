@@ -36,7 +36,7 @@ var Server = require("./modules/VideoServer.js");
 var server = new Server("../app", dataDirectory);
 server.port(httpPort);
 server.filter({
-	extensions: [ ".webm", ".mp4", ".ogg", "mov" ]
+	extensions: [ ".webm", ".mp4", ".ogg", ".mov" ]
 });
 server.serve();
 
