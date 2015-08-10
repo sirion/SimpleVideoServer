@@ -31,6 +31,10 @@ process.argv.forEach(function (val) {
 
 });
 
+process.on('uncaughtException', function (err) {
+	console.log(err);
+})
+
 var Server = require("./modules/VideoServer.js");
 
 var server = new Server("../app", dataDirectory);

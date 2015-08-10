@@ -5,9 +5,30 @@
 
 
 function VideoServer(appDirectory, dataDirectory) {
+	this._requiredModules = [
+		"fs", "path", "http", "send", "node-static"
+	];
+	var hasrequiredModules = this._requiredModules.reduce(function(previousValue, currentValue) {
+		var programExists = false;
+		try {
+			require.resolve(currentValue);
+			programExists = true;
+		} catch (ex) {
+			console.error("Required module " + currentValue + " not found in path.");
+		}
+
+		return previousValue && programExists;
+	});
+	if (!hasrequiredModules) {
+		console.error("Please install required modules using npm");
+		process.exit(1);
+	}
+
+
 	this._fs = require("fs");
 	this._path = require("path");
 	this._http = require("http");
+	this._send = require("send");
 
 	this._dir = this._fs.realpathSync(dataDirectory);
 
@@ -182,8 +203,10 @@ VideoServer.prototype._serveRequest = function(request, response) {
 			answer(500, data);
 		}
 	} else if (request.url.indexOf("/data/") === 0) {
-		request.url = request.url.substr(6);
-		this._dataServer.serve(request, response);
+
+		this._send(request, request.url.substr(6), { root: this._dir })
+			.on("error", answer.bind(this, 500, data))
+			.pipe(response);
 	} else {
 		this._appServer.serve(request, response);
 	}
