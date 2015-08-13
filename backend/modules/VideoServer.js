@@ -1,4 +1,4 @@
-/* global module, require, console */
+/* global module, require, console, process */
 /* eslint-disable no-console, no-underscore-dangle */
 (function(module) {
 "use strict";
@@ -55,18 +55,25 @@ VideoServer.prototype.serve = function() {
 
 
 VideoServer.prototype._serveRequest = function(request, response) {
-	function answer(status, data) {
+	var data = {
+		version: 0.1
+	};
+
+	function answer(status, responseData) {
 		response.writeHead(status, { "Content-Type": "application/json" });
-		response.write(JSON.stringify(data));
+		response.write(JSON.stringify(responseData));
 		response.end();
 	}
 
+	function answerError(error) {
+		data.error = error;
+		answer(500, data);
+	}
+
+
+
 	if (request.url.indexOf("/api/") === 0) {
 		console.log("serving API: " + request.url);
-
-		var data = {
-			version: 0.1
-		};
 
 		var subUrl = request.url.substr(5);
 
@@ -87,25 +94,14 @@ VideoServer.prototype._serveRequest = function(request, response) {
 		} else if (subUrl.indexOf("refresh") === 0) {
 			this.refresh();
 			answer(200, data);
+		} else if (subUrl.indexOf("tag/") === 0) {
+			this.whenCompleted(request).then(function(requestData) {
+				return this.tag(decodeURI(subUrl.substr(4)), requestData);
+			}.bind(this)).then(answer.bind(this, 200, data), answerError);
 		} else if (subUrl.indexOf("rate/") === 0) {
-			var requestData = "";
-			request.on("data", function(chunk) {
-				requestData += chunk;
-			});
-			request.on("end", function() {
-				try {
-					requestData = JSON.parse(requestData);
-					this.rate(decodeURI(subUrl.substr(5)), requestData)
-						.then(answer.bind(this, 200, data))
-						.catch(function(error) {
-							data.error = error;
-							answer(500, data);
-						});
-				} catch (error) {
-					data.error = error;
-					answer(500, data);
-				}
-			}.bind(this));
+			this.whenCompleted(request).then(function(requestData) {
+				return this.rate(decodeURI(subUrl.substr(5)), requestData);
+			}.bind(this)).then(answer.bind(this, 200, data), answerError);
 		} else {
 			answer(500, data);
 		}
@@ -119,6 +115,21 @@ VideoServer.prototype._serveRequest = function(request, response) {
 	}
 };
 
+VideoServer.prototype.whenCompleted = function(request) {
+	return new Promise(function(resolve, reject) {
+		var requestBody = "";
+		request.on("data", function(chunk) {
+			requestBody += chunk;
+		});
+		request.on("end", function() {
+			try {
+				resolve(JSON.parse(requestBody));
+			} catch (error) {
+				reject(error);
+			}
+		});
+	});
+};
 
 VideoServer.prototype.refresh = function() {
 	this._readInfoIndex();
@@ -176,14 +187,7 @@ VideoServer.prototype._updateInfoIndex = function() {
 					}
 				}
 				if (indexChanged) {
-					var indexFile = this._path.join(this._dir, ".mediaIndex.json");
-					this._fs.writeFile(indexFile, JSON.stringify(this._infoIndex), { encoding: "utf8" }, function(writeError) {
-						if (error) {
-							reject(writeError);
-						} else {
-							resolve(this._infoIndex);
-						}
-					}.bind(this));
+					return this._writeIndex();
 				} else {
 					resolve(this._infoIndex);
 				}
@@ -222,25 +226,30 @@ VideoServer.prototype.filter = function(filter) {
 VideoServer.prototype.tag = function(filename, requestData) {
 	// TODO: implement getter semantics
 	return new Promise(function(resolve, reject) {
-		if (requestData.tag === undefined) {
+		debug("TAG");
+		if (!Array.isArray(requestData.tags)) {
+			debug("No tags given");
 			reject(new Error("No tag given"));
 		} else if (!this._infoIndex[filename]) {
+			debug("Invalid file");
 			reject(new Error("File not found"));
 		} else {
-			if (!Array.isArray(this._infoIndex[filename].tags)) {
-				this._infoIndex[filename].tags = [ requestData.tag ];
-			} else {
-				var pos = this._infoIndex[filename].tags.indexOf(requestData.tag);
-				if (pos === -1) {
-					this._infoIndex[filename].tags.push(requestData.tag);
-				} else {
-					this._infoIndex[filename].tags.splice(pos, 1);
-				}
-			}
+			debug("Setting Tags: " + requestData.tags.join(", "));
+			this._infoIndex[filename].tags = requestData.tags;
+			// if (!Array.isArray(this._infoIndex[filename].tags)) {
+			// 	this._infoIndex[filename].tags = requestData.tags;
+			// } else {
+			// 	var pos = this._infoIndex[filename].tags.indexOf(requestData.tag);
+			// 	if (pos === -1) {
+			// 		this._infoIndex[filename].tags.push(requestData.tag);
+			// 	} else {
+			// 		this._infoIndex[filename].tags.splice(pos, 1);
+			// 	}
+			// }
 			this._writeIndex().then(resolve, reject);
 		}
-	});
-}
+	}.bind(this));
+};
 
 VideoServer.prototype.rate = function(filename, requestData) {
 	// TODO: rename to rating and implement getter semantics
@@ -259,7 +268,7 @@ VideoServer.prototype.rate = function(filename, requestData) {
 					(requestData.rating + (this._infoIndex[filename].rating * this._infoIndex[filename].numRatings)) /
 					(++this._infoIndex[filename].numRatings);
 			}
-			
+
 			this._writeIndex().then(resolve, reject);
 		}
 	}.bind(this));
@@ -267,6 +276,7 @@ VideoServer.prototype.rate = function(filename, requestData) {
 
 VideoServer.prototype._writeIndex = function() {
 	return new Promise(function(resolve, reject) {
+		debug("Writing Index");
 		var indexFile = this._path.join(this._dir, ".mediaIndex.json");
 		this._fs.writeFile(indexFile, JSON.stringify(this._infoIndex, null, 4), { encoding: "utf8" }, function(error) {
 			if (error) {
@@ -275,7 +285,7 @@ VideoServer.prototype._writeIndex = function() {
 				resolve();
 			}
 		});
-	});
+	}.bind(this));
 };
 
 

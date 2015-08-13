@@ -10,12 +10,21 @@ if (typeof Promise === "undefined") {
 	ES6Promise.polyfill();
 }
 
+debug = function() {}; // Ignore debug output;
 
 (function() {
 "use strict";
 
+
 process.argv.forEach(function (val) {
 	var pos = -1;
+
+	pos = val.indexOf("DEBUG");
+	if (pos > -1) {
+		debug = function() {
+			console.log.apply(console, arguments);
+		};
+	}
 
 	pos = val.indexOf("--port=");
 	if (pos > -1) {
@@ -32,8 +41,9 @@ process.argv.forEach(function (val) {
 });
 
 process.on('uncaughtException', function (err) {
-	console.log(err);
-})
+	console.error("Uncaught Exception:")
+	console.error(err);
+});
 
 var Server = require("./modules/VideoServer.js");
 

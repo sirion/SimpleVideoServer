@@ -1,3 +1,4 @@
+
 html, body, #content {
 	position: absolute;
 	margin: 0;
@@ -29,7 +30,7 @@ html, body, #content {
 	top: 0;
 }
 
-#mediaControlRateUp, #mediaControlRateDown {
+#mediaControlRateUp, #mediaControlRateDown, #mediaControlTags {
 	width: 20px;
 	height: 20px;
 	padding: 10px;
@@ -47,26 +48,49 @@ html, body, #content {
 }
 
 #mediaControlTitle {
-	left: 70px;
+	position: absolute;
+	left: 90px;
 	right: 70px;
 	height: 40px;
 	line-height: 40px;
 }
 
+#mediaControlTags {
+	position: absolute;
+	right: 0;
+}
+
 #mediaListContainer {
-	list-style-position: outside;
-	list-style-type: decimal-leading-zero;
 	width: 300px;
 	height: 100%;
 	top: 0px;
 	right: 0px;
+}
+
+#mediaListContainer #mediaList {
+	box-sizing: border-box;
+	position: absolute;
+	top: 20px;
+	height: calc(100% - 20px);
+	width: 100%;
+	margin: 0;
+	padding: 0;
 	padding-bottom: 10px;
-	font-size: 11pt;
+	padding-left: 1.5em;
+	text-indent: -1.5em;
+	list-style-position: inside;
+	list-style-type: none;
+	font-size: 10pt;
+	overflow-x: hidden;
 	overflow-y: auto;
 	-moz-user-select: none;
 	-webkit-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+}
+
+#mediaListContainer #mediaList li {
+	cursor: pointer;
 }
 
 .button {

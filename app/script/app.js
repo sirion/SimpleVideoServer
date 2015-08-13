@@ -153,6 +153,34 @@ PlayerUI.prototype.show = function(domId) {
 	domMediaControlTitle.id = "mediaControlTitle";
 	domMediaControls.appendChild(domMediaControlTitle);
 
+	var domMediaControlTags = document.createElement("img");
+	domMediaControlTags.id = "mediaControlTags";
+	domMediaControlTags.src = "img/tags.svg";
+	domMediaControlTags.addEventListener("click", function() {
+		// TODO: Use nicer async UI
+		if (!Array.isArray(this._currentActiveItem.file.tags)) {
+			this._currentActiveItem.file.tags = [];
+		}
+		var tagString = prompt("Enter Tags:", this._currentActiveItem.file.tags.join(","));
+		if (tagString === null) {
+			// Canceled
+			return;
+		}
+		var tags = tagString.split(",").map(function(tag) { return tag.trim(); });
+
+		request({
+			url: "/api/tag/" + this._currentActiveItem.filename,
+			method: "POST",
+			data: {
+				tags: tags
+			}
+		}).then(function() {
+			this._currentActiveItem.file.tags = tags;
+		}.bind(this));
+
+	}.bind(this));
+	domMediaControls.appendChild(domMediaControlTags);
+
 
 	document.addEventListener("keydown", function(event) {
 		if (event.keyCode === 66) {
@@ -173,7 +201,6 @@ PlayerUI.prototype.show = function(domId) {
 		domContainer.appendChild(domMediaControls);
 		domContainer.appendChild(domMediaElement);
 		domContainer.appendChild(domMediaListContainer);
-
 		this.render();
 	}.bind(this));
 };
@@ -239,7 +266,9 @@ PlayerUI.prototype.render = function() {
 
 			if (result === 0) {
 				// Fallback, sort by name
-				result = fileB.name > fileB.name ? 1 : -1;
+				var nameA = fileA.name.toLowerCase();
+				var nameB = fileB.name.toLowerCase();
+				result = nameB === nameA ? 0 : (nameB < nameA ? 1 : -1);
 			}
 
 			return result;
@@ -249,6 +278,7 @@ PlayerUI.prototype.render = function() {
 			var file = files[i];
 			var domMediaItem = document.createElement("li");
 			domMediaItem.className = "mediaItem";
+			domMediaItem.setAttribute("title", "Rating: " + (file.rating || 0) + " / " + (file.numRatings || 0));
 			var link = document.createElement("a");
 			var text = document.createTextNode(file.name);
 
